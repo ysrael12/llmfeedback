@@ -1,0 +1,8 @@
+<div class="card">
+ <h2>Feedback {{fb.id}} <span class="chip {{'ok' if fb.verdict=='aprovado' else 'fail'}}">{{fb.verdict}}</span></h2>
+ <div class="muted">{{path}} · {{fb.case}} · nota {{fb.rating}}/5 · {{fb.created_at}}</div>
+ <div style="margin:8px 0">{% for t in fb.tags %}<span class="chip">{{t}}</span>{% endfor %}</div>
+ {% if fb.comment %}<p>{{fb.comment}}</p>{% endif %}
+ <ul class="fb">{% for s in fb.sections %}<li>{{'👍' if s.vote=='up' else '👎' if s.vote=='down' else '·'}} <b>{{s.title}}</b>{% if s.comment %}: {{s.comment}}{% endif %}</li>{% endfor %}</ul>
+ <p><a href="/">Voltar</a></p>
+</div>

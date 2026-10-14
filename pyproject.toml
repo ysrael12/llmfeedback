@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "llmfeedback"
+version = "0.1.0"
+description = "Human-in-the-loop review for LLM outputs: generate, vote per section, store feedback as Markdown, let an AI agent plan the fixes."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.110",
+  "jinja2>=3.1",
+  "python-multipart>=0.0.9",
+  "pyyaml>=6.0",
+  "uvicorn>=0.29",
+  "markupsafe>=2.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "httpx>=0.27"]
+
+[project.scripts]
+llmfeedback = "llmfeedback.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/llmfeedback"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

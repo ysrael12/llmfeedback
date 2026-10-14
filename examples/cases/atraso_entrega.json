@@ -1,0 +1,1 @@
+{"id": "atraso_entrega", "description": "Explicar um atraso de entrega", "input": "Pedido 4521 atrasou 3 dias por greve na transportadora. Nova previsão: sexta-feira. Cliente pode cancelar sem custo.", "must_not_contain": ["[—–]"]}

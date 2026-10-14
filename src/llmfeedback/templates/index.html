@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{title}}</title>
+<link rel="icon" href="data:,">
+<script src="https://unpkg.com/htmx.org@2.0.4"></script>
+<style>
+:root{--accent:#4f46e5;--accentbg:#eef2ff;--ink:#18181b;--muted:#71717a;--line:#e4e4e7;--surf:#f4f4f5;--card:#fff;--ok:#16a34a;--okbg:#dcfce7;--bad:#dc2626;--badbg:#fee2e2}
+@media (prefers-color-scheme:dark){:root{--accent:#818cf8;--accentbg:#1e1b4b;--ink:#f4f4f5;--muted:#a1a1aa;--line:#3f3f46;--surf:#09090b;--card:#18181b;--ok:#4ade80;--okbg:#052e16;--bad:#f87171;--badbg:#450a0a}}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,sans-serif;background:var(--surf);color:var(--ink)}
+header{background:var(--card);border-bottom:1px solid var(--line);padding:14px 24px;display:flex;gap:12px;align-items:baseline}
+header b{color:var(--accent)}main{display:grid;grid-template-columns:280px 1fr;gap:20px;padding:20px 24px;max-width:1300px;margin:auto}
+@media(max-width:800px){main{grid-template-columns:1fr;padding:16px}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+h2{font-size:15px;margin:0 0 10px}h3{margin:0 0 6px;font-size:15px}.muted{color:var(--muted);font-size:13px}a{color:var(--accent)}
+button,select{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 12px}
+.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.case{display:block;width:100%;text-align:left;margin-bottom:8px}.case small{display:block;color:var(--muted)}
+.sec{border-left:3px solid var(--line);padding:8px 12px;margin:12px 0}.sec:has(input[value=up]:checked){border-color:var(--ok)}.sec:has(input[value=down]:checked){border-color:var(--bad)}
+.vote input{position:absolute;opacity:0}.vote label{display:inline-block;padding:4px 10px;border:1px solid var(--line);border-radius:999px;cursor:pointer;margin-right:4px}
+.vote input:focus-visible+label{outline:2px solid var(--accent)}
+.vote input[value=up]:checked+label{background:var(--okbg);border-color:var(--ok)}.vote input[value=down]:checked+label{background:var(--badbg);border-color:var(--bad)}
+textarea,input[type=text]{width:100%;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.chip{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;margin:2px;background:var(--surf)}.ok{background:var(--okbg)}.fail{background:var(--badbg)}
+.tags label{margin-right:10px;white-space:nowrap}.body p{margin:.3em 0}.htmx-indicator{display:none}.htmx-request .htmx-indicator,.htmx-request.htmx-indicator{display:inline}
+ul.fb{list-style:none;padding:0;margin:0}ul.fb li{padding:6px 0;border-top:1px solid var(--line);font-size:13px}
+</style></head>
+<body>
+<header><b>llmfeedback</b><span>{{title if title != 'llmfeedback' else 'Revisão humana de saídas de LLM'}}</span><span class="muted">adaptador: {{adapter}}</span></header>
+<main>
+<aside>
+ <div class="card"><h2>Casos</h2>
+ {% for case in cases %}
+  <button class="case" hx-post="/generate/{{case.id}}" hx-target="#work" hx-indicator="#loading">{{case.title or case.id}}<small>{{case.description}}</small></button>
+ {% else %}<p class="muted">O adaptador não devolveu casos.</p>{% endfor %}
+ <span id="loading" class="htmx-indicator muted">Gerando…</span>
+ </div>
+ <div class="card"><h2>Feedbacks salvos ({{feedbacks|length}})</h2>
+ <ul class="fb">{% for fb in feedbacks %}
+  <li><a href="#" hx-get="/feedback/{{fb.id}}" hx-target="#work">{{fb.id}}</a><br>
+  <span class="chip {{'ok' if fb.verdict=='aprovado' else 'fail'}}">{{fb.verdict}}</span> nota {{fb.rating}}/5 {% for t in fb.tags %}<span class="chip">{{t}}</span>{% endfor %}</li>
+ {% else %}<li class="muted">Nenhum ainda.</li>{% endfor %}</ul>
+ </div>
+</aside>
+<section id="work"><div class="card muted">Escolha um caso para gerar e avaliar.</div></section>
+</main></body></html>

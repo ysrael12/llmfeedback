@@ -1,0 +1,24 @@
+<form class="card" hx-post="/feedback" hx-target="#work">
+ <input type="hidden" name="run_id" value="{{run_id}}">
+ <h2>{{case.title or case.id}}</h2>
+ {% set m = gen.meta %}
+ <div class="muted">{% if m.model %}modelo {{m.model}}{% endif %}{% if m.prompt_hash %} · prompt {{m.prompt_hash}}{% endif %}{% if m.total_tokens %} · {{m.total_tokens}} tokens{% endif %}{% if m.latency_ms %} · {{m.latency_ms}} ms{% endif %}</div>
+ {% if gen.checks %}<div style="margin:8px 0">{% for ch in gen.checks %}<span class="chip {{'ok' if ch.ok else 'fail'}}" title="{{ch.detail}}">{{ch.name}}</span>{% endfor %}</div>{% endif %}
+ {% for title, body in sections %}
+ <div class="sec">
+  <h3>{{title}}</h3>
+  <div class="body">{{body|md}}</div>
+  <div class="vote" role="radiogroup" aria-label="Voto da seção {{title}}">
+   <input type="radio" id="u{{loop.index0}}" name="vote_{{loop.index0}}" value="up"><label for="u{{loop.index0}}">👍</label>
+   <input type="radio" id="d{{loop.index0}}" name="vote_{{loop.index0}}" value="down"><label for="d{{loop.index0}}">👎</label>
+  </div>
+  <input type="text" name="comment_{{loop.index0}}" aria-label="Comentário da seção {{title}}" placeholder="O que está certo ou errado nesta seção?" style="margin-top:6px">
+ </div>
+ {% endfor %}
+ <h2 style="margin-top:18px">Avaliação geral</h2>
+ <label>Nota <select name="rating">{% for n in [5,4,3,2,1] %}<option value="{{n}}">{{n}}</option>{% endfor %}</select></label>
+ <div class="tags" style="margin:10px 0">{% for t in tags %}<label><input type="checkbox" name="tags" value="{{t}}"> {{t}}</label>{% endfor %}</div>
+ <textarea name="comment" rows="3" aria-label="Comentário geral" placeholder="Comentário geral: o que o modelo deveria fazer diferente?"></textarea>
+ <input type="text" name="reviewer" aria-label="Revisor" placeholder="Revisor (opcional)" style="margin:8px 0">
+ <button class="primary" type="submit">Salvar feedback</button>
+</form>
