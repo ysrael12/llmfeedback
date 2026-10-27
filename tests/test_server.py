@@ -56,3 +56,38 @@ def test_checks():
 def test_load_adapter():
     a = load_adapter("examples.static_adapter:StaticAdapter")
     assert a.name == "static-demo" and len(a.list_cases()) == 2
+
+
+def test_runs_expiram_e_ficam_limitados(tmp_path, monkeypatch):
+    import llmfeedback.server as srv
+
+    monkeypatch.setattr(srv, "MAX_RUNS", 3)
+    client = TestClient(create_app(FakeAdapter(), feedback_dir=tmp_path))
+    ids = [client.post("/generate/c1").text.split('name="run_id" value="')[1].split('"')[0] for _ in range(6)]
+    assert client.post("/feedback", data={"run_id": ids[0], "rating": "5"}).status_code == 410
+    assert client.post("/feedback", data={"run_id": ids[-1], "rating": "5"}).status_code == 200
+
+
+def test_jsonl_e_gate(tmp_path):
+    import json
+
+    from llmfeedback.checks import load_rules
+    from llmfeedback.cli import check
+    from llmfeedback.jsonl import JsonlAdapter
+
+    log = tmp_path / "prod.jsonl"
+    log.write_text("\n".join(json.dumps(r) for r in [
+        {"id": "a", "input": "pedido", "output": "## Resumo\nok", "model": "m", "prompt_hash": "p9"},
+        {"output": "## Resumo\nruim — travessão"},
+    ]), encoding="utf-8")
+    rules = tmp_path / "checks.json"
+    rules.write_text(json.dumps([{"name": "sem-travessao", "type": "must_not_contain", "patterns": ["—"]}]),
+                     encoding="utf-8")
+    ad = JsonlAdapter(log, rules=load_rules(rules))
+    assert [c.id for c in ad.list_cases()] == ["a", "linha-2"]
+    import asyncio
+    g = asyncio.run(ad.generate("a"))
+    assert g.meta == {"model": "m", "prompt_hash": "p9"} and g.checks[0].ok
+    assert not asyncio.run(ad.generate("linha-2")).checks[0].ok
+    assert check(log, rules) == 1
+    assert len(JsonlAdapter(log, sample=1, seed=1).list_cases()) == 1

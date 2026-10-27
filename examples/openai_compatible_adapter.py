@@ -59,6 +59,7 @@ class Adapter:
             meta={
                 "model": data.get("model", self.model),
                 "prompt_hash": hashlib.sha256(self.system.encode()).hexdigest()[:16],
+                "prompt": self.system,  # guardado 1x em feedback/prompts/<hash>.md, para o summary mostrar o diff
                 "total_tokens": (data.get("usage") or {}).get("total_tokens"),
                 "latency_ms": round((time.monotonic() - started) * 1000),
             },

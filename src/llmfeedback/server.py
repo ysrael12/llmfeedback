@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 import uuid
 from pathlib import Path
 from typing import Any, Callable
@@ -26,6 +27,9 @@ DEFAULT_TAGS = [
     "formatação",
 ]
 
+RUN_TTL = 3600  # segundos que uma geração espera pelo voto
+MAX_RUNS = 200
+
 TEMPLATES = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 TEMPLATES.env.filters["md"] = markdown_safe
 
@@ -46,6 +50,15 @@ def create_app(
     feedback_dir = Path(feedback_dir)
     app = FastAPI(title=title, docs_url=None, redoc_url=None, openapi_url=None)
     runs: dict[str, dict[str, Any]] = {}  # geração em memória até o voto; o form só manda o id
+
+    def prune_runs() -> None:
+        """Descarta gerações sem voto: vencidas (RUN_TTL) e, passando de MAX_RUNS, as mais antigas."""
+        now = time.monotonic()
+        for k in [k for k, r in runs.items() if now - r["at"] > RUN_TTL]:
+            del runs[k]
+        for k in list(runs)[: max(0, len(runs) - MAX_RUNS)]:  # dict mantém ordem de inserção
+            del runs[k]
+
     base = {"title": title, "adapter": adapter.name}
 
     def cases() -> dict[str, Any]:
@@ -70,7 +83,8 @@ def create_app(
         gen = await adapter.generate(case_id)
         run_id = uuid.uuid4().hex[:12]
         sections = split_sections(gen.text)
-        runs[run_id] = {"case": case, "gen": gen, "titles": [t for t, _ in sections]}
+        prune_runs()
+        runs[run_id] = {"at": time.monotonic(), "case": case, "gen": gen, "titles": [t for t, _ in sections]}
         shown = [(t, show(b)) for t, b in sections]
         return TEMPLATES.TemplateResponse(
             request, "_report.html",

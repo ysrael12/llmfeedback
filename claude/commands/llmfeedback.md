@@ -1,34 +1,36 @@
 ---
-description: Revisão humana de saídas de LLM com llmfeedback. Sem argumento sobe o revisor; com "analisar" lê os feedbacks e planeja melhorias
+description: Human review of LLM outputs with llmfeedback. With no argument it starts the reviewer; with "analisar" it reads the feedback and plans improvements
 argument-hint: "[analisar]"
 ---
 
 # llmfeedback
 
-Argumento: `$ARGUMENTS`
+Argument: `$ARGUMENTS`
 
-Ajuste para o projeto: ADAPTER=`pacote.modulo:Objeto`, DIR=`feedback`, PORT=`7930`.
+Adjust for the project: ADAPTER=`package.module:Object`, DIR=`feedback`, PORT=`7930`.
 
-## Se o argumento for `analisar`
+## If the argument is `analisar`
 
-Não suba nada. Rode `llmfeedback summary --dir DIR` e leia **todos** os `DIR/*.md`
-(frontmatter YAML + "Comentário geral" + "Texto avaliado"). Então:
+Do not start anything. Run `llmfeedback summary --dir DIR` and read **all** of `DIR/*.md`
+(YAML frontmatter + "Comentário geral" + "Texto avaliado"). Then:
 
-1. Agrupe por `tags`, por seção com `vote: down`, por `meta.prompt_hash` e `meta.model`.
-   Compare nota média e % reprovado entre `prompt_hash` (o prompt melhorou ou piorou?).
-2. Para cada problema recorrente, cite 1–2 trechos reais do texto avaliado e o comentário humano.
-3. Reprovado pelo humano com `auto_checks.passed: true` = ponto cego: proponha um check
-   automático novo (regex, seção obrigatória) no adaptador ou nos casos de avaliação.
-4. Proponha mudanças concretas com arquivo (prompt, pós-processamento, checks).
-   Não aplique: apresente o plano e espere aprovação.
-5. Depois de aplicar: rode a avaliação automática do projeto e peça nova rodada humana.
+1. Group by `tags`, by sections with `vote: down`, by `meta.prompt_hash` and `meta.model`.
+   Compare average rating and % rejected across `prompt_hash` (did the prompt improve or get worse?).
+2. For each recurring problem, quote 1–2 real excerpts of the evaluated text and the human comment.
+3. Rejected by the human with `auto_checks.passed: true` = blind spot: propose a new automated
+   check (regex, required section) as a rule in `checks.json` (types `must_contain`,
+   `must_not_contain`, `required_sections`), which CI enforces with
+   `llmfeedback check --rules checks.json --jsonl outputs.jsonl`.
+4. Propose concrete changes with the file (prompt, post-processing, checks).
+   Do not apply them: present the plan and wait for approval.
+5. After applying: run the project's automated evaluation and ask for a new human round.
 
-## Caso contrário (subir o revisor)
+## Otherwise (start the reviewer)
 
-1. `llmfeedback serve --adapter ADAPTER --dir DIR --port PORT` em background.
-2. Aguarde `curl -sf localhost:PORT/health`.
-3. Devolva o link `http://localhost:PORT` e explique em uma linha: 👍/👎 por seção, nota,
-   tags e comentário; "Salvar feedback" grava `DIR/<data>_<caso>.md`.
-4. Lembre que `/llmfeedback analisar` lê os feedbacks e planeja as melhorias.
+1. `llmfeedback serve --adapter ADAPTER --dir DIR --port PORT` in the background.
+2. Wait for `curl -sf localhost:PORT/health`.
+3. Return the link `http://localhost:PORT` and explain in one line: 👍/👎 per section, rating,
+   tags and comment; "Salvar feedback" writes `DIR/<date>_<case>.md`.
+4. Remind them that `/llmfeedback analisar` reads the feedback and plans the improvements.
 
-O revisor não tem login: deixe em 127.0.0.1 e use túnel SSH para acesso remoto.
+The reviewer has no login: keep it on 127.0.0.1 and use an SSH tunnel for remote access.
